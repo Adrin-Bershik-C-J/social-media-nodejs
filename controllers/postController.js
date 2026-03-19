@@ -32,16 +32,16 @@ exports.createPost = async (req, res) => {
                       url: result.secure_url,
                       type: isVideo ? "video" : "image",
                     });
-                  }
+                  },
                 )
                 .end(file.buffer);
-            })
-        )
+            }),
+        ),
       );
 
       // classify + validate
       uploads.forEach(({ url, type }) =>
-        type === "image" ? imageUrls.push(url) : (videoUrl = url)
+        type === "image" ? imageUrls.push(url) : (videoUrl = url),
       );
 
       if (imageUrls.length > 5)
@@ -97,10 +97,24 @@ exports.createPost = async (req, res) => {
 
 exports.getAllPosts = async (req, res) => {
   try {
-    const posts = await Post.find({ user: req.user._id })
+    // Pagination params
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const filter = { user: req.user._id };
+
+    // Count total posts for pagination
+    const totalPosts = await Post.countDocuments(filter);
+    const totalPages = Math.ceil(totalPosts / limit);
+    const hasMore = page < totalPages;
+
+    const posts = await Post.find(filter)
       .populate("user", "username name profilePicture")
       .populate("comments.user", "username name profilePicture")
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
 
     const enrichedPosts = posts.map((post) => ({
       ...post.toObject(),
@@ -108,7 +122,14 @@ exports.getAllPosts = async (req, res) => {
       isLiked: post.likes.includes(req.user._id),
     }));
 
-    res.json(enrichedPosts);
+    res.json({
+      posts: enrichedPosts,
+      currentPage: page,
+      totalPages,
+      totalPosts,
+      hasMore,
+      postsPerPage: limit,
+    });
   } catch (err) {
     res.status(500).json({ message: "Server error" });
   }
