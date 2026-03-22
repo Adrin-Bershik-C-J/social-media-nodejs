@@ -85,11 +85,27 @@ exports.toggleFollow = async (req, res) => {
 
 exports.getFollowing = async (req, res) => {
   try {
-    const user = await User.findById(req.user._id).populate(
-      "following",
-      "name username profilePicture"
-    );
-    res.json(user.following);
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const user = await User.findById(req.user._id).select("following");
+    
+    // Get paginated IDs
+    const followingIds = user.following.slice(skip, skip + limit);
+    const followingUsers = await User.find({ _id: { $in: followingIds } })
+      .select("name username profilePicture");
+
+    // Get actual total by checking all IDs
+    const allFollowingUsers = await User.find({ _id: { $in: user.following } })
+      .select("_id");
+    const totalFollowing = allFollowingUsers.length;
+
+    res.json({
+      following: followingUsers,
+      hasMore: skip + limit < totalFollowing,
+      totalFollowing,
+    });
   } catch (error) {
     res.status(500).json({ message: "Failed to fetch following users" });
   }
@@ -97,11 +113,27 @@ exports.getFollowing = async (req, res) => {
 
 exports.getFollowers = async (req, res) => {
   try {
-    const user = await User.findById(req.user._id).populate(
-      "followers",
-      "name username profilePicture"
-    );
-    res.json(user.followers);
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const user = await User.findById(req.user._id).select("followers");
+    
+    // Get paginated IDs
+    const followerIds = user.followers.slice(skip, skip + limit);
+    const followersUsers = await User.find({ _id: { $in: followerIds } })
+      .select("name username profilePicture");
+
+    // Get actual total by checking all IDs
+    const allFollowersUsers = await User.find({ _id: { $in: user.followers } })
+      .select("_id");
+    const totalFollowers = allFollowersUsers.length;
+
+    res.json({
+      followers: followersUsers,
+      hasMore: skip + limit < totalFollowers,
+      totalFollowers,
+    });
   } catch (err) {
     res.status(500).json({ message: "Failed to fetch followers" });
   }
