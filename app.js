@@ -13,6 +13,7 @@ app.use("/api/users", require("./routes/userRoutes"));
 app.use("/api/posts", require("./routes/postRoutes"));
 app.use("/api/comments", require("./routes/commentRoutes"));
 app.use("/api/notifications", require("./routes/notificationRoutes"));
+app.use("/api/chats", require("./routes/chatRoutes"));
 
 app.get("/", (req, res) => {
   res.send("API is running...");
