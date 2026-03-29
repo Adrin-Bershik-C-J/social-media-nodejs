@@ -9,6 +9,7 @@ const {
   uploadProfilePicture,
   getHomeFollowers,
   getUserDetails,
+  searchUsers,
 } = require("../controllers/userController");
 const protect = require("../middlewares/authMiddleware");
 const upload = require("../middlewares/upload");
@@ -25,6 +26,7 @@ router.put(
   uploadProfilePicture
 );
 router.get("/getHomeFollowers", protect, getHomeFollowers);
+router.get("/search", protect, searchUsers);
 router.get("/user/:username",protect, getUserDetails);
 
 module.exports = router;
