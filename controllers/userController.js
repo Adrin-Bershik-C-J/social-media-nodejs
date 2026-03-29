@@ -191,27 +191,3 @@ exports.getUserDetails = async (req, res) => {
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
-
-exports.searchUsers = async (req, res) => {
-  try {
-    const { q } = req.query;
-    
-    if (!q || !q.trim()) {
-      return res.json([]);
-    }
-
-    const users = await User.find({
-      $or: [
-        { username: { $regex: q, $options: "i" } },
-        { name: { $regex: q, $options: "i" } }
-      ]
-    })
-    .select("name username profilePicture")
-    .limit(10);
-
-    res.json(users);
-  } catch (err) {
-    console.error("Error searching users:", err);
-    res.status(500).json({ message: "Server error" });
-  }
-};
